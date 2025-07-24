@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Consulta de Contenedores</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      text-align: center;
+      background-color: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      width: 90%;
+      max-width: 400px;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #resultado {
+      margin-top: 20px;
+      font-size: 15px;
+    }
+    a {
+      text-decoration: none;
+      color: #007bff;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    ul {
+      text-align: left;
+      padding-left: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Consulta de Contenedores</h2>
+    <input type="text" id="contenedor" placeholder="Ej: MSCU1234567" />
+    <button onclick="buscar()">Buscar</button>
+    <div id="resultado"></div>
+  </div>
+  <script>
+    const navieras = {
+      "Evergreen": {
+        prefijos: ["EGLU","EMCU","EISU","EGSU","EGHU","EMKU","TXGU","HMCU","IMTU","EINU","MAGU","TRHU"],
+        tracking: id => `https://www.evergreen-line.com/tbi1/jsp/TBI1_1.jsp?containerNo=${id}`
+      },
+      "Wan Hai": {
+        prefijos: ["WHLU","WHSU","WHCU","WHNU","WHAU","WHRU","WHHU","WHVU","WHZU","FBIU","FBLU","TGCU","TPCU","HJLU"],
+        tracking: id => `https://eservice.wanhai.com/shipweb/pages/track.xhtml?contno=${id}`
+      }
+    };
+
+    function buscar() {
+      const input = document.getElementById("contenedor").value.toUpperCase().trim();
+      const resultado = document.getElementById("resultado");
+      resultado.innerHTML = "";
+
+      if (!/^[A-Z]{4}\d{7}$/.test(input)) {
+        resultado.innerHTML = "❗ Formato inválido. Debe ser ABCD1234567.";
+        return;
+      }
+
+      const prefijo = input.slice(0, 4);
+      let encontrada = false;
+      let sugerencias = [];
+
+      for (const naviera in navieras) {
+        const datos = navieras[naviera];
+        if (datos.prefijos.includes(prefijo)) {
+          const enlace = datos.tracking(input);
+          resultado.innerHTML = `✅ Contenedor de <strong>${naviera}</strong><br><a href="${enlace}" target="_blank">Ir al tracking</a>`;
+          encontrada = true;
+          break;
+        } else if (datos.prefijos.some(p => p.startsWith(prefijo.slice(0, 2)))) {
+          sugerencias.push({
+            nombre: naviera,
+            link: datos.tracking(input)
+          });
+        }
+      }
+
+      if (!encontrada) {
+        if (sugerencias.length > 0) {
+          resultado.innerHTML = `❓ No se encontró coincidencia exacta.<br>¿Podría ser una de estas navieras?<br><ul>${sugerencias.map(s => `<li><a href="${s.link}" target="_blank">${s.nombre}</a></li>`).join('')}</ul>`;
+        } else {
+          resultado.innerHTML = `❌ Prefijo no reconocido.<br>Puede intentar hacer tracking manual desde:<br><a href="https://www.track-trace.com/container" target="_blank">https://www.track-trace.com/container</a>`;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
